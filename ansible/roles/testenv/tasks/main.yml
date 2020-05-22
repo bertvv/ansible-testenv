@@ -1,0 +1,81 @@
+# ansible/roles/testenv/tasks/main.yml
+# Set up the VM as a test environment for Ansible roles, based on Docker and
+# Molecule.
+---
+
+- name: Include distribution specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  tags: testenv
+
+- name: Ensure the necessary (apt) packages are installed
+  package:
+    name: "{{ testenv_packages }}"
+    state: present
+  tags: testenv
+
+- name: Ensure the necessary (pip) packages are installed
+  pip:
+    name: "{{ testenv_pip_packages }}"
+    state: present
+  tags: testenv
+
+- name: Ensure the Docker group exists
+  group:
+    name: docker
+    state: present
+  tags: testenv
+
+- name: Ensure user Vagrant is a member of the Docker group
+  user:
+    name: vagrant
+    groups:
+      - docker
+  tags: testenv
+
+- name: Ensure necessary services are running and enabled
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  with_items: "{{ testenv_services }}"
+  tags: testenv
+
+- name: Enable some handy aliases for managing Docker
+  copy:
+    src: docker-aliases.sh
+    dest: /etc/profile.d/docker-aliases.sh
+    owner: root
+    group: root
+    mode: 644
+  tags: testenv
+
+- name: Create a Docker volume for Portainer persistent data
+  docker_volume:
+    volume_name: portainer_data
+    state: present
+  tags: testenv
+
+- name: Create a Docker internal network for Portainer
+  docker_network:
+    name: portainer_net
+  tags: testenv
+
+- name: Create a Docker container for Portainer
+  docker_container:
+    name: portainer
+    image: portainer/portainer
+    state: started
+    restart_policy: always
+    networks:
+      - name: portainer_net
+    purge_networks: true
+    ports:
+      - 8000:8000
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data portainer/portainer
+  tags: testenv

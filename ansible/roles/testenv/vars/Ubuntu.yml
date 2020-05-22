@@ -1,0 +1,23 @@
+# ansible/roles/testenv/vars/Ubuntu.yml
+---
+
+testenv_packages:
+  - bats
+  - cockpit
+  - cockpit-ws
+  - ctop
+  - docker
+  - docker-compose
+  - git
+  - python3-pip
+  - tree
+
+testenv_pip_packages:
+  - ansible
+  - docker
+  - molecule
+  - netaddr
+
+testenv_services:
+  - cockpit.socket
+  - docker.service
