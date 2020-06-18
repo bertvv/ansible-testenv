@@ -11,6 +11,7 @@ testenv_packages:
   - docker
   - docker-compose
   - git
+  - mariadb-client
   - python3-pip
   - silversearcher-ag
   - tree
